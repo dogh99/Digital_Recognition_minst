@@ -137,9 +137,31 @@ def predict(X, parameters):
     AL, _ = forward_propagation_with_batch_norm(X, parameters)
     return AL.T  # 返回转置后的预测值
 
+# 初始化AdaGrad参数
+def initialize_adagrad(parameters):
+    adagrad_cache = {}
+    L = len(parameters) // 2
+    for l in range(L):
+        adagrad_cache['dW' + str(l + 1)] = np.zeros_like(parameters['W' + str(l + 1)])
+        adagrad_cache['db' + str(l + 1)] = np.zeros_like(parameters['b' + str(l + 1)])
+    return adagrad_cache
+
+# 使用AdaGrad更新参数
+def update_parameters_with_adagrad(parameters, grads, adagrad_cache, learning_rate, epsilon=1e-8):
+    L = len(parameters) // 2
+    for l in range(L):
+        adagrad_cache['dW' + str(l + 1)] += grads['dW' + str(l + 1)] ** 2
+        adagrad_cache['db' + str(l + 1)] += grads['db' + str(l + 1)] ** 2
+
+        parameters['W' + str(l + 1)] -= learning_rate * grads['dW' + str(l + 1)] / (np.sqrt(adagrad_cache['dW' + str(l + 1)]) + epsilon)
+        parameters['b' + str(l + 1)] -= learning_rate * grads['db' + str(l + 1)] / (np.sqrt(adagrad_cache['db' + str(l + 1)]) + epsilon)
+
+    return parameters, adagrad_cache
+
 # 神经网络模型函数
 def neural_network_model_with_batch_norm(X, Y, layers_dims, learning_rate, num_epochs, batch_size):
     parameters = initialize_parameters(layers_dims)
+    adagrad_cache = initialize_adagrad(parameters)
     costs = []
     train_accuracy_array = []
 
@@ -160,8 +182,8 @@ def neural_network_model_with_batch_norm(X, Y, layers_dims, learning_rate, num_e
             # 反向传播（带 Batch Normalization）
             grads = backward_propagation_with_batch_norm(AL, Y_batch, caches, parameters)  
             
-            # 参数更新
-            parameters = update_parameters(parameters, grads, learning_rate)
+            # 参数更新（使用AdaGrad）
+            parameters, adagrad_cache = update_parameters_with_adagrad(parameters, grads, adagrad_cache, learning_rate)
 
         epoch_cost /= num_minibatches
         costs.append(epoch_cost) 
