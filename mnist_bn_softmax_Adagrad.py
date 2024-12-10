@@ -212,7 +212,7 @@ def neural_network_model_with_batch_norm(X, Y, layers_dims, learning_rate, num_e
 
 learning_rate = 0.085
 num_epochs = 400
-batch_size = 512
+batch_size = 64
 
 # 设置本地文件路径
 train_images_path = 'mnist/train-images-idx3-ubyte.gz'
